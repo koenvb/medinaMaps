@@ -1,8 +1,7 @@
 //Some globals...
 
 var map;
-var patients;
-var addressesList = new Array()
+var patients = [];
 
 //events
 
@@ -23,7 +22,6 @@ $(window).resize(function () {
 
 //Google maps initializ
 function initialize() {
-  geocoder = new google.maps.Geocoder();
 
   var latlng = new google.maps.LatLng(51.2418916, 3.5412300000000414);
   var mapOptions = {
@@ -59,11 +57,19 @@ $('#submit').click(function(e) {
   window.console&&console.log(patients);
   
   displayMap();
-  var patientsGeocoded = doGeocode(patients);
-  window.console&&console.log(patientsGeocoded);
-  
-  
-  
+
+  // linking addresses with location
+  // http://stackoverflow.com/questions/13067403/saving-geocoder-results-to-an-array-closure-trouble
+  for (i=0; i<patients.length; i++)  {
+  	//Save array-data in String to pass to the Geocoder
+  	currAddress = patients[i]['address'];
+  	var coordinates;
+  	doGeocode(currAddress, i); 
+  }
+
+  window.console&&console.log(patients);
+
+
   $('#inputForm').toggle();
   
 
@@ -73,7 +79,6 @@ $('#submit').click(function(e) {
 //============== FUNCTIONS ==========================
 
 
-//parse the pasted text coming from a pdf file.
 
 function displayMap() {
   $('#map-canvas').removeClass('hidden')  
@@ -81,7 +86,7 @@ function displayMap() {
 }
 
 
-
+//parse the pasted text coming from a pdf file.
 function filterAdobePDFpaste(inputText)
 {
 		var adres = new Array();
@@ -187,50 +192,46 @@ function filterAdobePDFpaste(inputText)
    $('#tableOverview').append(table);
  }
 
-function getLatLong(address) {
-
-var geocoder = new google.maps.Geocoder();
-var result = "";
-
-geocoder.geocode( { 'address': address}, function(results, status) {
-     if (status == google.maps.GeocoderStatus.OK) {
-         result[lat] = results[0].geometry.location.Pa;
-         result[lng] = results[0].geometry.location.Qa;
-     } else {
-         result = "Unable to find address: " + status;
-     }
-     storeResult(result);
-    });
-}
-
-
-function doGeocode(inputAddress) {
+function doGeocode(currAddress,i) {
 	
-	var geocoder;
- 	var result= "";
+	var geocoder = new google.maps.Geocoder();
+ 	var location= [];
  	
-	for(var i = 0; i < inputAddress.length-1;i++){
-	  geocoder.geocode( { 'address': inputAddress[i]['address']}, function(results, status) {
+	//for(var i = 0; i < patients.length;i++){
+	  //currAddress = patients[i]['address'];
+	  geocoder.geocode( { 'address': currAddress }, function (results, status) {
 	    if (status == google.maps.GeocoderStatus.OK) {	      	
 	      
-	      result[lat] = results[0].geometry.location.lat();
-	      result[long] = results[0].geometry.location.lng();
-	     }
+	      var latLong = results[0].geometry.location;
+       	  coordinates = latLong.lat() + "," + latLong.lng();
+
+       	  patients[i]['location'] = coordinates;
+	      //location.push(results[0].geometry.location);
+	      
+	     // window.console&&console.log(results);
+
+	      //if (location.length == patients.length){
+	      //		storeResult(location,patients);
+	      //}
+		}
 	    else {
 	         alert('Geocode was not successful for the following reason: ' + status);
 	    } 
-	    
-	   	 storeResult(result,inputAddress[i]);
-	   	
+	    	   	
 	   });
 	   
-	}//for
+	//}//for
 }
 
-function storeResult(result, address){
-	
-	address["location"] = result
-	return
+
+
+function storeResult(location,patients){	
+
+	  window.console&&console.log(location);
+	  window.console&&console.log(patients);
+
+
+
 }
 
 
