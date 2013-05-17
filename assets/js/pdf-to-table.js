@@ -40,6 +40,17 @@ var map;
 
 var addressesList = new Array()
 
+$("#map-canvas").width('100%').height('100%').gmap3();
+
+
+$(window).resize(function () {
+    window.console&&console.log('resize');
+    var h = $(window).height(),
+        offsetTop = 60; // Calculate the top offset
+    window.console&&console.log(h);
+    $('#map_canvas').css('height', (h - offsetTop));
+}).resize();
+
 
 //Google maps initializ
 function initialize() {
@@ -49,6 +60,7 @@ function initialize() {
   var mapOptions = {
     zoom: 8,
     center: latlng,
+    scrollwheel: false,
     mapTypeId: google.maps.MapTypeId.ROADMAP
   }
   map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
@@ -61,6 +73,14 @@ google.maps.event.addDomListener(window, 'load', initialize);
 //table was constantly dissappearing so had to add the preventDefault 
 //http://stackoverflow.com/questions/2112708/jquery-insert-new-dom-element-disappears
 
+$('#editor-btn').click(function()
+{
+    window.console&&console.log('btnclicked');
+    $('#inputForm').toggle();
+
+});
+
+
 $('#submit').click(function(e) {
   e.preventDefault();
   window.console&&console.log('btnclicked');
@@ -72,6 +92,7 @@ $('#submit').click(function(e) {
   generateTable(result);
   window.console&&console.log('startgeo');
   geocodeAddress(result);
+  $('#inputForm').toggle();
 
 
  });
@@ -98,21 +119,26 @@ function geocodeAddress(inputAddress){
 				   
 	//Selection of the address /^.*[0-9]{4}.[\w-]{2,40}/
 	temp = replaceStr.match(/^.*[0-9]{4}.[\w-]{2,40}/gm);
-	window.console&&console.log(temp);		   
-			 
-	interval = setInterval( function () {
-			 	    	//for(var j:int = 0; j<temp.length-1 ; j++){
-							//var labelString:String
-				doGeocode(temp[i].toString(), inputAddress[i]["adres"] + "\n" + inputAddress[i]["toestand"]);
-				//doGeocode(temp[i].toString());
+	window.console&&console.log(temp);
 
-			 	    		//trace("interval" + i);
-			 	i++;
-			 	if (i >= temp.length-1){
-			 		clearInterval(interval);
-			 	}
-			 	
-			 	},500);
+    for(var i = 0; i < temp.length-1;i++){
+        doGeocode(temp[i].toString(), inputAddress[i]["adres"] + "\n" + inputAddress[i]["toestand"]);
+    }
+
+			 
+//	interval = setInterval( function () {
+//			 	    	//for(var j:int = 0; j<temp.length-1 ; j++){
+//							//var labelString:String
+//				doGeocode(temp[i].toString(), inputAddress[i]["adres"] + "\n" + inputAddress[i]["toestand"]);
+//				//doGeocode(temp[i].toString());
+//
+//			 	    		//trace("interval" + i);
+//			 	i++;
+//			 	if (i >= temp.length-1){
+//			 		clearInterval(interval);
+//			 	}
+//
+//			 	},500);
 }
 
 //only geocoding, no mapping or markers done.
@@ -296,10 +322,7 @@ function getToestand(){
 	return "Niet Nuchter"								
 }
 
-function geocodeText(input)
-{
 
-}
 
 function generateTable(resultText){
 
