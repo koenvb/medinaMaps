@@ -3,6 +3,11 @@
 var map;
 var patients = [];
 
+//Global infoWindow so only one is open at a time on a click event.
+//http://stackoverflow.com/questions/12621274/close-infowindow-when-another-marker-is-clicked
+
+infowindow = new google.maps.InfoWindow();
+
 //events
 
 google.maps.event.addDomListener(window, 'load', initialize);
@@ -52,7 +57,6 @@ $('#submit').click(function(e) {
   var input = $('#txtinput').val();
   patients = filterAdobePDFpaste(input);
   
-  generateTable(patients);
   
   window.console&&console.log(patients);
   
@@ -68,10 +72,10 @@ $('#submit').click(function(e) {
   }
 
 
+  generateTable(patients);
 
   $('#inputForm').toggle();
   
-
  });
  
  
@@ -96,9 +100,9 @@ function filterAdobePDFpaste(inputText)
 		var searchNietNuchter = new RegExp();
 		var searchDagCurve = new RegExp();
 
-		
+
 		//Regular expressions
-		
+
 		//Filter all lines which start with at least two UPPERCASE words following a space
 		pattern = /^([A-Z'.* ]{2,} ){2,}[A-Z]{1,}/;
 		//for second run to only have ones with a postcode
@@ -106,7 +110,7 @@ function filterAdobePDFpaste(inputText)
 		searchNuchter= /(N - Nuchter)+/;
 		searchNietNuchter= /(NN - Niet nuchter)+/;
 		searchDagCurve= /(DC - Dagcurve)+/;
-						
+			
 		adres = inputText.split('\n');
 			
 			//nuchter -- niet nuchter routine
@@ -173,23 +177,44 @@ function filterAdobePDFpaste(inputText)
   			return result;
 }
  
+
+
  
  function generateTable(resultText){
  
   var table = $('<table></table>').addClass('table table-striped table-bordered table-hover table-condensed');
-  table.append('<thead><tr><th>Naam</th><th>Adres</th><th>Status</th><tr><thead>')
+  table.append('<thead><tr><th>Nr</th><th>Naam</th><th>Adres</th><th>Status</th><tr><thead>')
  
  	for(var i=0; i < resultText.length; i++){
      	var row = $('<tr></tr>');
- 			var col1 = $('<td></td>').text(resultText[i]['name'])
- 	    	var col2 = $('<td></td>').text(resultText[i]['address'])
- 	    	var col3 = $('<td></td>').text(resultText[i]['status'])
- 	    row.append(col1,col2,col3)
+     		var col0 = $('<td></td>').text((i+1) + "");
+ 			var col1 = $('<td></td>').text(resultText[i]['name']);
+ 	    	var col2 = $('<td></td>').text(resultText[i]['address']);
+ 	    	var col3 = $('<td></td>').text(resultText[i]['status']);
+
+ 	    row.attr('id',""+ i);
+ 	    if(resultText[i]['status'] == 'Nuchter'){
+ 	    	row.addClass('error');
+ 	    }
+ 	    else if(resultText[i]['status'] == 'Dagcurve'){
+ 	    	row.addClass('info');
+ 	    }
+
+ 	    row.append(col0,col1,col2,col3);
+
      	table.append(row);
  
  	}
    $('#tableOverview').append(table);
+   $('#tableOverview tr').click(function(){
+   		var tableMarker = patients[this.id]['marker'][0];
+   		infowindow.setContent("<ul><li>Patient: "+patients[this.id]['name']+"</li>"+"<li>Adres: "+patients[this.id]['address']+ "</li>"+"<li>Status: "+patients[this.id]['status']+ "</li></ul>")
+   		infowindow.open(map,tableMarker);
+   	});
  }
+
+$('#tableOverview tr td').text
+
 
 function doGeocode(currAddress,i) {
 	
@@ -206,9 +231,7 @@ function doGeocode(currAddress,i) {
        	  patients[i]['location'] = [latLong.lat(),latLong.lng()];
 
        	  //create infowindow
-       	  var infowindow = new google.maps.InfoWindow({
-       	  	content: ""+ patients[i]['name']
-       	  });
+       	  //infowindow = new google.maps.InfoWindow();
 
        	  var myLatLng = new google.maps.LatLng(patients[i]['location'][0],patients[i]['location'][1]);
 
@@ -219,6 +242,8 @@ function doGeocode(currAddress,i) {
        	  	title: ""+ patients[i]['name']
        	  });
 
+       	  //setting marker color 
+       	  //TODO: Change to nice icon.
        	  if (patients[i]['status'] == "Niet nuchter") {
 			//http://stackoverflow.com/questions/11064081/javascript-change-google-map-marker-color
 		  	marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
@@ -238,7 +263,9 @@ function doGeocode(currAddress,i) {
 
        	  //add eventlistener
        	  google.maps.event.addListener(marker, 'click', function() {
+    		 infowindow.setContent("<ul><li>Patient: "+patients[i]['name']+"</li>"+"<li>Adres: "+patients[i]['address']+ "</li>"+"<li>Status: "+patients[i]['status']+ "</li></ul>")
     		 infowindow.open(map,marker);
+    		 //map.panTo(marker.position);
   		  });
 
        	  //create marker per patient for later reference.
