@@ -23,7 +23,7 @@ $(window).resize(function () {
 //Google maps initializ
 function initialize() {
 
-  var latlng = new google.maps.LatLng(51.2418916, 3.5412300000000414);
+  var latlng = new google.maps.LatLng(51.0825279, 3.4525158999999803);
   var mapOptions = {
     zoom: 8,
     center: latlng,
@@ -67,7 +67,6 @@ $('#submit').click(function(e) {
   	doGeocode(currAddress, i); 
   }
 
-  window.console&&console.log(patients);
 
 
   $('#inputForm').toggle();
@@ -165,7 +164,7 @@ function filterAdobePDFpaste(inputText)
 					var address = $.trim(temp.match(/^.*[0-9]{4}.[\w-]{2,40}/gm));
 					
 					//assemble into patient object.										
-					var patient={name: name + "", address: address + "", gender: gender +"", status:status + "", location:""};		
+					var patient={name: name + "", address: address + "", gender: gender +"", status:status + "", location:[] , marker:[]};		
   		       		result.push(patient);
   		   			}
   			}
@@ -197,22 +196,55 @@ function doGeocode(currAddress,i) {
 	var geocoder = new google.maps.Geocoder();
  	var location= [];
  	
-	//for(var i = 0; i < patients.length;i++){
-	  //currAddress = patients[i]['address'];
 	  geocoder.geocode( { 'address': currAddress }, function (results, status) {
 	    if (status == google.maps.GeocoderStatus.OK) {	      	
 	      
 	      var latLong = results[0].geometry.location;
-       	  coordinates = latLong.lat() + "," + latLong.lng();
+       	 // coordinates = latLong.lat() + "," + latLong.lng();
 
-       	  patients[i]['location'] = coordinates;
-	      //location.push(results[0].geometry.location);
-	      
-	     // window.console&&console.log(results);
+       	  map.setCenter(results[0].geometry.location);
+       	  patients[i]['location'] = [latLong.lat(),latLong.lng()];
 
-	      //if (location.length == patients.length){
-	      //		storeResult(location,patients);
-	      //}
+       	  //create infowindow
+       	  var infowindow = new google.maps.InfoWindow({
+       	  	content: ""+ patients[i]['name']
+       	  });
+
+       	  var myLatLng = new google.maps.LatLng(patients[i]['location'][0],patients[i]['location'][1]);
+
+       	  //create related marker object
+       	  var marker = new google.maps.Marker({
+       	  	position: myLatLng,
+       	  	map: map,
+       	  	title: ""+ patients[i]['name']
+       	  });
+
+       	  if (patients[i]['status'] == "Niet nuchter") {
+			//http://stackoverflow.com/questions/11064081/javascript-change-google-map-marker-color
+		  	marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+	  	  }
+	  	  
+	  	  else if (patients[i]['status'] == "Nuchter"){
+
+	  	 	marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+
+	  	  }
+	  
+	  	  else if (patients[i]['status'] == "Dagcurve") {
+	  	
+	  		marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+	  	  }
+
+
+       	  //add eventlistener
+       	  google.maps.event.addListener(marker, 'click', function() {
+    		 infowindow.open(map,marker);
+  		  });
+
+       	  //create marker per patient for later reference.
+       	  patients[i]['marker'].push(marker);
+
+
 		}
 	    else {
 	         alert('Geocode was not successful for the following reason: ' + status);
@@ -220,64 +252,6 @@ function doGeocode(currAddress,i) {
 	    	   	
 	   });
 	   
-	//}//for
-}
-
-
-
-function storeResult(location,patients){	
-
-	  window.console&&console.log(location);
-	  window.console&&console.log(patients);
-
-
-
-}
-
-
-
-function doGeocodeOld(inputAddress) {
- 
-for(var i = 0; i < inputAddress.length-1;i++){
-
-  geocoder.geocode( { 'address': inputAddress[i]['address']}, function(results, status) {
-    if (status == google.maps.GeocoderStatus.OK) {
-     
-      map.setCenter(results[0].geometry.location);
-      var marker = new google.maps.Marker({
-          map: map,
-          position: results[0].geometry.location
-      });
-
-      if (inputAddress[i]['status'] == "Niet nuchter") {
- 			
-			//http://stackoverflow.com/questions/11064081/javascript-change-google-map-marker-color
-		  marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
-	  }
-	  else if (inputAddress[i]['status'] == "Nuchter"){
-
-	  	 marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
-
-	  }
-	  else if (inputAddress[i]['status'] == "Dagcurve") {
-	  	
-	  	marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
-	  }
-	  
-	  var label = inputAddress[i]['name'] +"" + "\n" + 
-	  			   inputAddress[i]['address'] +"" +"\n" +
-	  			   	inputAddress[i]['status'] +"";
-	  
-	  google.maps.event.addListener(marker, 'click', function() {
-	  	infowindow = new google.maps.InfoWindow({content: label });
-	  	infowindow.open(map,marker);
-	  });
-
-    } else {
-      alert('Geocode was not successful for the following reason: ' + status);
-    }
-  });
-}
 }
 
 
