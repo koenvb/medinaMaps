@@ -1,0 +1,10 @@
+<div class="footer">
+  <div class="container">
+    <p class="muted pull-right">
+      # if current_user.admin
+        | <a href="/_s/{{request.url.replace(request.host_url, '')}}" target="_blank">View in JSON</a>
+      # endif
+    </p>
+    <p class="muted">&copy; 2013 - Koen van Besien</p>
+  </div>
+</div>
