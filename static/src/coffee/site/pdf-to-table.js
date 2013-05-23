@@ -1,6 +1,7 @@
 //Some globals...
 
 var map;
+var panorama;
 var patients = [];
 
 var timeout = 600;
@@ -35,12 +36,28 @@ function initialize() {
   var mapOptions = {
     zoom: 8,
     center: latlng,
-    scrollwheel: false,
+    scrollwheel: true,
     mapTypeId: google.maps.MapTypeId.ROADMAP
   }
   map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+  panorama = map.getStreetView();
+  panorama.setPosition(latlng);
+  panorama.setPov(/** @type {google.maps.StreetViewPov} */({
+    heading: 265,
+    pitch: 0
+  }));
  }
 
+
+function toggleStreetView() {
+  var toggle = panorama.getVisible();
+  if (toggle == false) {
+    panorama.setVisible(true);
+  } else {
+    panorama.setVisible(false);
+  }
+}
 
 //table was constantly dissappearing so had to add the preventDefault 
 //http://stackoverflow.com/questions/2112708/jquery-insert-new-dom-element-disappears
@@ -211,7 +228,8 @@ function filterAdobePDFpaste(inputText)
    $('#tableOverview').append(table);
    $('#tableOverview tr').click(function(){
    		var tableMarker = patients[this.id]['marker'][0];
-   		infowindow.setContent("<ul><li>Patient: "+patients[this.id]['name']+"</li>"+"<li>Adres: "+patients[this.id]['address']+ "</li>"+"<li>Status: "+patients[this.id]['status']+ "</li></ul>")
+   		panorama.setPosition(tableMarker.position);
+   		infowindow.setContent("<ul><li>Patient: "+patients[this.id]['name']+"</li><li>Adres: "+patients[this.id]['address']+ "</li><li>Status: "+patients[this.id]['status']+ '</li><li><a href="#" onclick="toggleStreetView()"+)>Show streetview</a></li></ul>');
    		infowindow.open(map,tableMarker);
 		map.panTo(tableMarker.position);
    	});
@@ -267,7 +285,8 @@ function doGeocode(currAddress,i) {
 
        	  //add eventlistener
        	  google.maps.event.addListener(marker, 'click', function() {
-    		 infowindow.setContent("<ul><li>Patient: "+patients[i]['name']+"</li>"+"<li>Adres: "+patients[i]['address']+ "</li>"+"<li>Status: "+patients[i]['status']+ "</li></ul>")
+    		 panorama.setPosition(myLatLng);
+    		 infowindow.setContent("<ul><li>Patient: "+patients[i]['name']+"</li><li>Adres: "+patients[i]['address']+ "</li><li>Status: "+patients[i]['status']+ '</li><li><a href="#" onclick="toggleStreetView()"+)>Show streetview</a></li></ul>')
     		 infowindow.open(map,marker);
     		 //map.panTo(marker.position);
   		  });
