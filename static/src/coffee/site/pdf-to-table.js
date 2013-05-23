@@ -7,6 +7,7 @@ var patients = [];
 var timeout = 600;
 
 
+
 //Global infoWindow so only one is open at a time on a click event.
 //http://stackoverflow.com/questions/12621274/close-infowindow-when-another-marker-is-clicked
 
@@ -32,7 +33,7 @@ $(window).resize(function () {
 //Google maps initializ
 function initialize() {
 
-  var latlng = new google.maps.LatLng(51.0825279, 3.4525158999999803);
+  var latlng = new google.maps.LatLng(51.210211, 3.385516);
   var mapOptions = {
     zoom: 8,
     center: latlng,
@@ -47,6 +48,16 @@ function initialize() {
     heading: 265,
     pitch: 0
   }));
+
+  var imageHome = '/p/img/home_marker.png'
+  var homeMarker = new google.maps.Marker({
+  	position: latlng,
+  	map:map,
+  	title: "Home",
+  	icon: imageHome
+
+  });
+
  }
 
 
