@@ -1,31 +1,41 @@
 //Some globals...
 
-var map;
-var panorama;
-var patients = [];
+var map = null;
+var panorama = null;
 
-var timeout = 600;
+//routing variables
+var directionService = null;
+var directionDisplay = null;
+var startPoint = false;
+var endPoint = false;
+var bounds = new google.maps.LatLngBounds();
+var address_count = 0;
+
+
+infowindow = new google.maps.InfoWindow();
+
+var patients = [];
+var timeout = 1;
 
 
 
 //Global infoWindow so only one is open at a time on a click event.
 //http://stackoverflow.com/questions/12621274/close-infowindow-when-another-marker-is-clicked
 
-infowindow = new google.maps.InfoWindow();
 
 //events
-
 google.maps.event.addDomListener(window, 'load', initialize);
+
 
 $(window).resize(function () {
     window.console&&console.log('resize');
     var w = $(window).width(),
-    	offsetRight = 60
+      offsetRight = 100
     var h = $(window).height(),
-        offsetTop = 100; // Calculate the top offset
+        offsetTop = 150; // Calculate the top offset
     window.console&&console.log(h);
     $('#map-canvas').css('height', (h - offsetTop));
-    $('map-canvas').css('width', (w - offsetRight));
+    //$('#map-canvas').css('width', (w - offsetRight));
 }).resize();
 
 
@@ -33,9 +43,10 @@ $(window).resize(function () {
 //Google maps initializ
 function initialize() {
 
+  //initialize map
   var latlng = new google.maps.LatLng(51.210211, 3.385516);
   var mapOptions = {
-    zoom: 8,
+    zoom: 10 ,
     center: latlng,
     scrollwheel: true,
     mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -57,6 +68,26 @@ function initialize() {
   	icon: imageHome
 
   });
+
+  content = ['<div id="infoWindow">'+
+            '<ul><li><strong>Thuis</strong></li>'+
+             '<li><a href="#" onclick="toggleStreetView();">Show streetview</a></li></ul>'+
+            '<button class="button" id="selectStart">Kies als startpunt</button></div>'].join('<br>');
+
+  addInfoWindow(homeMarker,content);
+
+  startPoint = homeMarker;
+  bounds.extend(homeMarker.position);
+  //direction/routing
+  directionsService = new google.maps.DirectionsService();
+  directionDisplay = new google.maps.DirectionsRenderer(
+    {
+        suppressMarkers: true, //suppress green A-B markers given by directions
+        preserveViewport: true // do not change zoom level to fit the route
+        
+    }
+    );
+    directionDisplay.setMap(map);
 
  }
 
@@ -91,8 +122,6 @@ $('#submit').click(function(e) {
   
   window.console&&console.log(patients);
   
-  displayMap();
-
   // linking addresses with location
   // http://stackoverflow.com/questions/13067403/saving-geocoder-results-to-an-array-closure-trouble
   for (i=0; i<patients.length; i++)  {
@@ -102,11 +131,11 @@ $('#submit').click(function(e) {
     doGeocode(currAddress,i);
    }
 
-
-  generateTable(patients);
-
   $('#inputForm').toggle();
-  
+  generateTable(patients);
+  displayMap();
+
+
  });
  
  
@@ -239,10 +268,20 @@ function filterAdobePDFpaste(inputText)
    $('#tableOverview').append(table);
    $('#tableOverview tr').click(function(){
    		var tableMarker = patients[this.id]['marker'][0];
+      var i = this.id;
+
+      content = [
+            '<div id="infoWindow">'+
+            '<ul><li><strong>'+patients[i]["name"]+'</strong></li>'+
+            '<li>Adres: '+patients[i]["address"]+ '</li>'+
+            '<li>Status: '+patients[i]["status"]+ '</li>'+
+            '<li><a href="#" onclick="toggleStreetView();">Show streetview</a></li></ul>'+
+            '<button class="button" id="selectStart">Kies als startpunt</button></div>'
+              ].join('<br>');
+
    		panorama.setPosition(tableMarker.position);
-   		infowindow.setContent("<ul><li>Patient: "+patients[this.id]['name']+"</li><li>Adres: "+patients[this.id]['address']+ "</li><li>Status: "+patients[this.id]['status']+ '</li><li><a href="#" onclick="toggleStreetView()"+)>Show streetview</a></li></ul>');
-   		infowindow.open(map,tableMarker);
-		map.panTo(tableMarker.position);
+   		infowindow.setContent(content);
+      infowindow.open(map,tableMarker);
    	});
  }
 
@@ -262,9 +301,6 @@ function doGeocode(currAddress,i) {
 
        	  map.setCenter(results[0].geometry.location);
        	  patients[i]['location'] = [latLong.lat(),latLong.lng()];
-
-       	  //create infowindow
-       	  //infowindow = new google.maps.InfoWindow();
 
        	  var myLatLng = new google.maps.LatLng(patients[i]['location'][0],patients[i]['location'][1]);
 
@@ -293,19 +329,25 @@ function doGeocode(currAddress,i) {
 	  		marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
 	  	  }
 
+           content = [
+            '<div id="infoWindow">'+
+            '<ul><li><strong>'+patients[i]["name"]+'</strong></li>'+
+            '<li>Adres: '+patients[i]["address"]+ '</li>'+
+            '<li>Status: '+patients[i]["status"]+ '</li>'+
+            '<li><a href="#" onclick="toggleStreetView();">Show streetview</a></li></ul>'+
+            '<button class="button" id="selectStart">Kies als startpunt</button></div>'
+              ].join('<br>');
 
-       	  //add eventlistener
-       	  google.maps.event.addListener(marker, 'click', function() {
-    		 panorama.setPosition(myLatLng);
-    		 infowindow.setContent("<ul><li>Patient: "+patients[i]['name']+"</li><li>Adres: "+patients[i]['address']+ "</li><li>Status: "+patients[i]['status']+ '</li><li><a href="#" onclick="toggleStreetView()"+)>Show streetview</a></li></ul>')
-    		 infowindow.open(map,marker);
-    		 //map.panTo(marker.position);
-  		  });
-
+           addInfoWindow(marker,content);
        	  //create marker per patient for later reference.
        	  patients[i]['marker'].push(marker);
-
-
+          bounds.extend(marker.position);
+          address_count++
+          
+            if(address_count == patients.length){
+                afterGeocodingStuff();
+            }
+              
 		}
 		else
         {
@@ -325,6 +367,58 @@ function doGeocode(currAddress,i) {
 	   
 }
 
+function recalcRoute(){
+    if(startPoint != false && endPoint != false){
+        var request = {
+            origin: startPoint.getPosition(),
+            destination: endPoint.getPosition(),
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC
+        };
+        directionsService.route(request, function(response, status){
+            if(status == google.maps.DirectionsStatus.OK){
+                $('#route-details').parent().fadeIn();
+                directionDisplay.setDirections(response);
+                var summaryPanel = document.getElementById('route-details');
+                summaryPanel.innerHTML = 'Van: ';
+                summaryPanel.innerHTML += startPoint.title + '<br>';
+                summaryPanel.innerHTML += 'Naar: ' + endPoint.title + '<br>';
+                summaryPanel.innerHTML += 'Afstand: '+ response.routes[0].legs[0].distance.text + '<br>';
+                summaryPanel.innerHTML += 'Tijd: ' +response.routes[0].legs[0].duration.text + '<br><br>';
+            directionDisplay.setMap(map);
+            }
+        });
+    }else{
+        directionDisplay.setMap(null);
+    }
+}
+
+function addInfoWindow(marker, content) {
+    google.maps.event.addListener(marker, 'click', function () {
+        endPoint = marker;
+        recalcRoute();
+        panorama.setPosition(marker.getPosition());
+        infowindow.setContent(content);
+        infowindow.open(map, marker);
+    });
+}
+
+google.maps.event.addListener(infowindow, 'domready', function() {
+        $('#infoWindow button').on('click',function(){
+            console.log(infowindow.anchor.position);
+            if($(this).attr('id') == 'selectStart'){
+                startPoint = infowindow.anchor;
+                endPoint = false;
+            }
+            recalcRoute();
+        });
+});
+
+function afterGeocodingStuff(){
+
+    map.fitBounds(bounds);
+
+}
 
 
 

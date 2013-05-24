@@ -19,12 +19,19 @@
 
   <body>
     # include 'bit/top_bar.html'
+    <div id="wrap">
+
     <div class="container-fluid" >
       # include 'bit/notifications.html'
       # block content
       # endblock
     </div>
+        <div id="push"></div>
+
+
+    </div>
     # include 'bit/footer.html'
+
     # include 'bit/script.html'
     # block scripts
     # endblock
