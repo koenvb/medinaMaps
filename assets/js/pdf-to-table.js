@@ -115,23 +115,41 @@ function filterAdobePDFpaste(inputText)
 			for (var i = 0; i < adres.length; i++) {
 				
 				// Als er in 1 lijn, EN een postcode te vinden is EN which starts with at least 
-				// two UPPERCASE words following a space
+				// two UPPERCASE words following a space. This is needed to rule out the doctors names which are never with a postcode
+				// Also important to later be able to take out special characters preceding names.
 				//Example string: 
 				//VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
+				// * VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+				// This name with star will go through, later on we filter that out when getting the name.
+
+
 				temp = adres[i]
 				
 				if (  pattern.test(temp) && postcode.test(temp)) {
 					
+					//clean up filthy chars at start of the string
+					//input: * VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+					//output: VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+
+					temp = temp.replace(/^[^\w]+/,"")
+
 					//Remove BSN in order to be able to use digits to sort out the postal code
+					//Input = VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
+
 					temp = temp.replace( /BSN.*/g, "");
 					
-					// Example: VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
+					//Output: VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
 
 					//Selection of the name, always take first part of the array
+					//had to remove start of the line ^ so I could filter out special characters
+					//* VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+
+
 					var name = temp.match(/^([A-Z'*.]{2,} ){1,}[A-Z]{2,}/)[0];
 					
 					
 					//remove the name from the string
+					
 					temp = temp.replace(/^([A-Z'*.]{2,} ){1,}[A-Z]{2,}/, "");
 					
 					//filter out gender
@@ -253,6 +271,8 @@ function doGeocode(currAddress,i) {
 	   });
 	   
 }
+
+
 
 
 
