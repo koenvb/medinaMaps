@@ -1,0 +1,32 @@
+# extends 'base.html'
+
+# block content
+  <div class="page-header">
+    <h1>
+      {{title}}
+      <small>Any questions or suggestions are welcome</small>
+    </h1>
+  </div>
+  <div class="row">
+    <div class="span4">
+      <form class="form" method="POST" action=".">
+        <fieldset>
+          {{form.csrf_token}}
+
+          # set form_field = form.subject
+          # include 'bit/form_text_field.html'
+
+          # set form_field = form.message
+          # include 'bit/form_textarea_field.html'
+
+          # set form_field = form.email
+          # include 'bit/form_text_field.html'
+
+          <button type="submit" class="btn btn-primary btn-block btn-loading" data-loading-text="Sending Feedback..">
+            Send Feedback
+          </button>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+# endblock
