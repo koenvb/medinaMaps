@@ -164,7 +164,7 @@ function filterAdobePDFpaste(inputText)
 		//Regular expressions
 
 		//Filter all lines which start with at least two UPPERCASE words following a space
-		pattern = /^([A-Z'.* ]{2,} ){2,}[-A-Z]{1,}/;
+		pattern = /^([-A-Z'.* ]{2,} ){2,}[-A-Z]{1,}/;
 		//for second run to only have ones with a postcode
 		postcode = /\d{4}/;
 		searchNuchter= /(N - Nuchter)+/;
@@ -185,7 +185,15 @@ function filterAdobePDFpaste(inputText)
 				temp = adres[i]
 				
 				if (  pattern.test(temp) && postcode.test(temp)) {
-					
+
+          // names with a * in front of them will give problems so we first remove these so they do not bother us anymore
+
+          //input:* VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
+          //output:VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
+
+          temp = temp.replace(/^[^\w]+/,"");
+
+				
 					//Remove BSN in order to be able to use digits to sort out the postal code
 					temp = temp.replace( /BSN.*/g, "");
 					
