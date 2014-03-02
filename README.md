@@ -18,3 +18,12 @@ For deployment on GAE:
 * ./build.py -m
 * appcfg.py update .
 
+To fix issues
+
+* Edit the static/src/coffee/site/pdf-to-table.js
+* Remove the cacert in your google app engine sdk
+
+```
+mv /Applications/GoogleAppEngineLauncher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine/lib/cacerts/cacerts.txt cacert.txt_old
+
+```
