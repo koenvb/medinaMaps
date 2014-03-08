@@ -164,7 +164,7 @@ function filterAdobePDFpaste(inputText)
 		//Regular expressions
 
 		//Filter all lines which start with at least two UPPERCASE words following a space
-		pattern = /^([-A-Z'.* ]{2,} ){2,}[-A-Z]{1,}/;
+		pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
 		//for second run to only have ones with a postcode
 		postcode = /\d{4}/;
 		searchNuchter= /(N - Nuchter)+/;

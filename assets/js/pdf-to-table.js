@@ -99,8 +99,8 @@ function filterAdobePDFpaste(inputText)
 		
 		//Regular expressions
 		
-		//Filter all lines which start with at least two UPPERCASE words following a space
-		pattern = /^([A-Z'.* ]{2,} ){2,}[A-Z]{1,}/;
+		//Filter all lines which start with at least two UPPERCASE words following a space + BSN should be on the same line.
+		pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
 		//for second run to only have ones with a postcode
 		postcode = /\d{4}/;
 		searchNuchter= /(N - Nuchter)+/;
@@ -118,8 +118,8 @@ function filterAdobePDFpaste(inputText)
 				// two UPPERCASE words following a space. This is needed to rule out the doctors names which are never with a postcode
 				// Also important to later be able to take out special characters preceding names.
 				//Example string: 
-				//VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
-				// * VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+				//VERMEULEN JOS V Sint-Margrietestraat 4 9260 Madios F NN - Niet nuchter BSN: 350724.206.52 1
+				// * VERMEULEN JOS M stationstraat 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
 				// This name with star will go through, later on we filter that out when getting the name.
 
 
@@ -128,21 +128,21 @@ function filterAdobePDFpaste(inputText)
 				if (  pattern.test(temp) && postcode.test(temp)) {
 					
 					//clean up filthy chars at start of the string
-					//input: * VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
-					//output: VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+					//input: * VERMEULEN JOS M stationstraat 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+					//output: VERMEULEN JOS M stationstraat 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
 
 					temp = temp.replace(/^[^\w]+/,"")
 
 					//Remove BSN in order to be able to use digits to sort out the postal code
-					//Input = VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
+					//Input = VERMEULEN JOS V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
 
 					temp = temp.replace( /BSN.*/g, "");
 					
-					//Output: VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
+					//Output: VERMEULEN JOS V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
 
 					//Selection of the name, always take first part of the array
 					//had to remove start of the line ^ so I could filter out special characters
-					//* VAN BESIEN KOEN M Paardehof 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
+					//* VERMEULEN JOS M stationstraat 148 9260 Madios F NN - Niet nuchter BSN: 260819.183.43 2
 
 
 					var name = temp.match(/^([A-Z'*.]{2,} ){1,}[A-Z]{2,}/)[0];
