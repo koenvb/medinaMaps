@@ -200,11 +200,11 @@ function filterAdobePDFpaste(inputText)
 					// Example: VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
 
 					//Selection of the name, always take first part of the array
-					var name = temp.match(/^([-A-Z'*.]{2,} ){1,}[-A-Z]{2,}/)[0];
+					var name = temp.match(/^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/)[0];
 					
 					
 					//remove the name from the string
-					temp = temp.replace(/^([-A-Z'*.]{2,} ){1,}[-A-Z]{2,}/, "");
+					temp = temp.replace(/^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/, "");
 					
 					//filter out gender
 					//Using jquery trim for whitespace trimming
