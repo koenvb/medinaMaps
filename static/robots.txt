@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: /signout/
-Disallow: /_s/
-Disallow: /_ah/
