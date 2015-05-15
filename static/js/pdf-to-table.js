@@ -8,7 +8,6 @@ table.append('<thead><tr><th>Nr</th><th>Naam</th><th>Adres</th><th>Status</th><t
 
 
 //routing variables
-var directionService = null;
 var directionDisplay = null;
 var startPoint = false;
 var endPoint = false;
@@ -32,12 +31,10 @@ google.maps.event.addDomListener(window, 'load', initialize);
 
 
 $(window).resize(function () {
-    window.console&&console.log('resize');
     var w = $(window).width(),
         offsetRight = 100
     var h = $(window).height(),
         offsetTop = 150; // Calculate the top offset
-    window.console&&console.log(h);
     $('#map-canvas').css('height', (h - offsetTop));
     //$('#map-canvas').css('width', (w - offsetRight));
 }).resize();
@@ -171,6 +168,11 @@ function filterAdobePDFpaste(inputText)
 
     //Filter all lines which start with at least two UPPERCASE words following a space
     pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
+    reBSN = /BSN/gm;
+    //pattern to select all before the Gender.
+    reAllBeforeGender = /(\w.+)( V | M )/gm;
+    reGender = /( V | M )$/gm;
+    nameRegEx = /^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/gm;
     //for second run to only have ones with a postcode
     postcode = /\d{4}/;
     searchNuchter= /(N - Nuchter)+/;
@@ -188,16 +190,18 @@ function filterAdobePDFpaste(inputText)
         // two UPPERCASE words following a space
         //Example string:
         //VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
-        temp = adres[i]
+        temp = adres[i];
 
-        if (  pattern.test(temp) && postcode.test(temp)) {
+
+
+        if ( reBSN.test(temp)) {
 
             // names with a * in front of them will give problems so we first remove these so they do not bother us anymore
 
             //input:* VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
             //output:VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter BSN: 350724.206.52 1
 
-            temp = temp.replace(/^[^\w]+/,"");
+            //temp = temp.replace(/^[^\w]+/,"");
 
 
             //Remove BSN in order to be able to use digits to sort out the postal code
@@ -206,19 +210,22 @@ function filterAdobePDFpaste(inputText)
             // Example: VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
 
             //Selection of the name, always take first part of the array
-            var name = temp.match(/^([-A-Z'*.]{2,} ){1,}[-A-Z]{2,}/)[0];
+
+            var nameWithGender = temp.match(reAllBeforeGender);
 
 
-            //remove the name from the string
-            temp = temp.replace(/^([-A-Z'*.]{2,} ){1,}[-A-Z]{2,}/, "");
+            if (nameWithGender != null){
 
-            //filter out gender
-            //Using jquery trim for whitespace trimming
-            var gender = $.trim(temp.match(/^( [A-Z'*.]{1} )/)[0]);
+                var name = nameWithGender[0].replace(reGender,"");
+                //remove the name from the string
+                var gender = nameWithGender[0].match(reGender);
+                temp = temp.replace(reAllBeforeGender, "");
+            }
 
-            //remove gender
-            temp = temp.replace(/^( [A-Z'*.]{1} )/, "");
-
+            else{
+                 name = "unknown";
+                 gender = "unknown";
+            }
             //String leftover: Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
             //looking for status
 
@@ -238,12 +245,25 @@ function filterAdobePDFpaste(inputText)
                 status = "unknown";
             }
 
-            //Selection of the address /^.*[0-9]{4}.[\w-]{2,40}/
-            var address = $.trim(temp.match(/^.*[0-9]{4}.[\w-]{2,40}/gm));
+            //console.log("before address", temp);
+            //Eindeken 20 9970 Kaprijke F NN - Niet nuchter
 
-            //assemble into patient object.
-            var patient={name: name + "", address: address + "", gender: gender +"", status:status + "", location:[] , marker:[]};
-            result.push(patient);
+            var address =
+
+            try {
+
+                //Selection of the address /^.*[0-9]{4}.[\w-]{2,40}/
+                var address = $.trim(temp.match(/^.*[0-9]{4}.[\w-]{2,40}/gm));
+            }
+            catch(err) {
+                console.log("Address incorrect", err)
+            }
+            finally {
+                //assemble into patient object.
+                var patient={name: name + "", address: address + "", gender: gender +"", status:status + "", location:[] , marker:[]};
+                result.push(patient);
+            }
+
         }
     }
 
