@@ -173,6 +173,7 @@ function filterAdobePDFpaste(inputText)
     reAllBeforeGender = /(\w.+)( V | M )/gm;
     reGender = /( V | M )$/gm;
     nameRegEx = /^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/gm;
+    reBeforeF = /.+?(?= F )/gm
     //for second run to only have ones with a postcode
     postcode = /\d{4}/;
     searchNuchter= /(N - Nuchter)+/;
@@ -247,22 +248,13 @@ function filterAdobePDFpaste(inputText)
 
             //console.log("before address", temp);
             //Eindeken 20 9970 Kaprijke F NN - Niet nuchter
+            // select everything before the " F " string as address.
+            var address = temp.match(reBeforeF);
 
-            var address =
+            //assemble into patient object.
+            var patient={name: name + "", address: address + "", gender: gender +"", status:status + "", location:[] , marker:[]};
+            result.push(patient);
 
-            try {
-
-                //Selection of the address /^.*[0-9]{4}.[\w-]{2,40}/
-                var address = $.trim(temp.match(/^.*[0-9]{4}.[\w-]{2,40}/gm));
-            }
-            catch(err) {
-                console.log("Address incorrect", err)
-            }
-            finally {
-                //assemble into patient object.
-                var patient={name: name + "", address: address + "", gender: gender +"", status:status + "", location:[] , marker:[]};
-                result.push(patient);
-            }
 
         }
     }
