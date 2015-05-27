@@ -117,7 +117,7 @@ $('#editor-btn').click(function()
 //submit pasted text
 $('#submit').click(function(e) {
     e.preventDefault();
-
+    patients = [];
     var input = $('#txtinput').val();
     patients = filterAdobePDFpaste(input);
 
@@ -167,7 +167,7 @@ function filterAdobePDFpaste(inputText)
     //Regular expressions
 
     //Filter all lines which start with at least two UPPERCASE words following a space
-    pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
+    //pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
     reBSN = /BSN/gm;
     //pattern to select all before the Gender.
     reAllBeforeGender = /(\w.+)( V | M )/gm;
@@ -175,7 +175,7 @@ function filterAdobePDFpaste(inputText)
     nameRegEx = /^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/gm;
     reBeforeF = /.+?(?= F )/gm
     //for second run to only have ones with a postcode
-    postcode = /\d{4}/;
+    rePostcodeOnlyAddress = /.+?\d{4}/;
     searchNuchter= /(N - Nuchter)+/;
     searchNietNuchter= /(NN - Niet nuchter)+/;
     searchDagCurve= /(DC - Dagcurve)+/;
@@ -206,7 +206,7 @@ function filterAdobePDFpaste(inputText)
 
 
             //Remove BSN in order to be able to use digits to sort out the postal code
-            temp = temp.replace( /BSN.*/g, "");
+            //temp = temp.replace( /BSN.*/g, "");
 
             // Example: VAN BESIEN KOEN V Sint-Margrietestraat 4 9981 Sint-Margriete F NN - Niet nuchter
 
@@ -276,6 +276,7 @@ function generateTable(resultText){
         var col1 = $('<td></td>').text(resultText[i]['name']);
         var col2 = $('<td></td>').text(resultText[i]['address']);
         var col3 = $('<td></td>').text(resultText[i]['status']);
+        
 
         row.attr('id',""+ i);
         if(resultText[i]['status'] == 'Nuchter'){
@@ -312,20 +313,24 @@ function generateTable(resultText){
 
 $('#tableOverview tr td').text
 
-
+var postcodeOnlyChecked = 0;
 function doGeocode(currAddress,i) {
 
     var geocoder = new google.maps.Geocoder();
     var location= [];
 
+
+
     geocoder.geocode( { 'address': currAddress }, function (results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
 
+            console.log(results[0].formatted_address);
             var latLong = results[0].geometry.location;
             // coordinates = latLong.lat() + "," + latLong.lng();
 
             map.setCenter(results[0].geometry.location);
             patients[i]['location'] = [latLong.lat(),latLong.lng()];
+            patients[i]['address'] = results[0].formatted_address;
 
             var myLatLng = new google.maps.LatLng(patients[i]['location'][0],patients[i]['location'][1]);
 
@@ -382,10 +387,23 @@ function doGeocode(currAddress,i) {
                 //http://stackoverflow.com/questions/7649155/avoid-geocode-limit-on-custom-google-map-with-multiple-markers
                 setTimeout(function() { doGeocode(currAddress,i); }, (timeout));
             }
+
+
+
             else if (status == google.maps.GeocoderStatus.ZERO_RESULTS)
             {
+                if(postcodeOnlyChecked < 1){
+                    console.log('Address not found, trying postcode only lookup ' + currAddress);
+                    postcodeOnlyChecked = postcodeOnlyChecked + 1;
+                    postcodeOnlyAddress = currAddress.match(rePostcodeOnlyAddress)[0];
+                    doGeocode(postcodeOnlyAddress,i);
 
-                alert('Adress was not found: ' + patients[i]['name'] + ' ' + currAddress );
+                }
+                else{
+                    alert('Address was not found: ' + patients[i]['name'] + ' ' + currAddress );
+                    console.log('Adress was not found: ' + patients[i]['name'] + ' ' + currAddress );
+                }
+
             }
         }
 
