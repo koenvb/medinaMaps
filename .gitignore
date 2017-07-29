@@ -2,3 +2,6 @@ medina.sublime*
 .DS_Store
 node_modules/*
 *.pyc
+.idea/
+static/js/pdf-to-table-compiled.js
+static/js/pdf-to-table-compiled.js.map
