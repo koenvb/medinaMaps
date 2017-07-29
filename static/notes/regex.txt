@@ -1,0 +1,122 @@
+I want to filter out the following information out of a long piece of text. Which I copy
+and paste in a textfield and then want to process into a table as a result. with
+
+* Name
+* Address
+* Status
+
+Example snippet:
+
+    Thuisprikindeling voor: Vrijdag 15 Mei 2015 DE SMART BON 22 afspraken
+    Pagina 1/4
+    Persoonlijke mededeling:
+    Algemene mededeling:
+    Prikpostgegevens: REEK-Eeklo extern, (-)
+    Telefoonnummer Fax Mobiel 0499/9999999 Email dummy.dummy@gmail.com
+    DUMMY FOO V Stationstreet 2 8000 New York F N - Sober BSN: 1655
+    THUIS Analyses: Werknr: PIN: 000000002036405
+    Opdrachtgever: Laboratorium Arts:
+    Mededeling:  Some comments // VERY DIFFICULT
+    FO DUMMY FOO V Butterstreet 6 8740 Melbourne F N - Sober BSN: 15898
+    THUIS Analyses: Werknr: AFD 3 PIN: 000000002036400
+    Opdrachtgever: Laboratorium Arts:
+    Mededeling: ZH BLA / BLA BLA - AFD 3 - SOCIAL BEER
+    JOHN FOOO V Waterstreet 1 9990 Rome F N - Sober BSN: 17878
+    THUIS / Analyses: Werknr: K111 PIN: 000000002036388
+    Opdrachtgever: Laboratorium Arts:
+    Mededeling: TRYOUT/FOO
+    FO SMOOTH M.FOO M Queen Elisabethstreet 19 9990 Paris F NN - Not Sober BSN: 14877
+
+What I want to get out of it is this:
+
+    DUMMY FOO Stationstreet 2 8000 New York Sober
+    FO DUMMY FOO Butterstreet 6 8740 Melbourne Sober
+    JOHN FOOO Waterstreet 1 9990 Rome Sober
+    FO SMOOTH M.FOO Queen Elisabethstreet 19 9990 Paris Not sober
+
+
+My strategy for the moment is using the following:
+
+* Filter all the lines with at least two words in capitals at the beginning of the line. AND a 4 digit postal code.
+* Then discard all the other lines as I only need the lines with the names and adresses
+* Then I strip out all the information needed for that line
+* Strip the name / address / status
+
+I use the following code:
+
+      //Regular expressions
+
+        //Filter all lines which start with at least two UPPERCASE words following a space
+        pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
+        postcode = /\d{4}/;
+        searchSober= /(N - Sober)+/;
+        searchNotSober= /(NN - Not sober)+/;
+
+        adres = inputText.split('\n');
+
+
+        for (var i = 0; i < adres.length; i++) {
+
+            // If in one line And a postcode and which starts with at least
+            // two UPPERCASE words following a space
+            temp = adres[i]
+
+            if (  pattern.test(temp) && postcode.test(temp)) {
+
+                //Remove BSN in order to be able to use digits to sort out the postal code
+                temp = temp.replace( /BSN.*/g, "");
+
+                // Example: DUMMY FOO V Stationstreet 2 8000 New York F N - Sober
+
+                //Selection of the name, always take first part of the array
+                // DUMMY FOO
+                var name = temp.match(/^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/)[0];
+
+                //remove the name from the string
+                temp = temp.replace(/^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/, "");
+                // V Stationstreet 2 8000 New York F N - Sober
+
+                //filter out gender
+                //Using jquery trim for whitespace trimming
+                // V
+                var gender = $.trim(temp.match(/^( [A-Z'*.]{1} )/)[0]);
+
+                //remove gender
+                temp = temp.replace(/^( [A-Z'*.]{1} )/, "");
+
+                // Stationstreet 2 8000 New York F N - Sober
+                //looking for status
+
+                var status = "unknown";
+                if ( searchNotsober.test(temp) ) {
+                    status = "Not soberr";
+                }
+                else if ( searchSober.test(temp) ) {
+                    status = "Sober";
+
+
+                }
+                else {
+                    status = "unknown";
+                }
+
+                //Selection of the address /^.*[0-9]{4}.[\w-]{2,40}/
+                //Stationstreet 2 8000 New York
+                var address = $.trim(temp.match(/^.*[0-9]{4}.[\w-]{2,40}/gm));
+
+                //assemble into person object.
+                var person={name: name + "", address: address + "", gender: gender +"", status:status + "", location:[] , marker:[]};
+                result.push(person);
+            }
+        }
+
+The problem I have now is that:
+
+* Sometimes the names are not written in CAPITALS
+* Sometimes the postal code is not added so my code just stops working.
+* Sometimes they put a * in front of the name
+
+A broader question is what strategy can you take to tackle these type of messy input problems?
+Should I make cases for every mistake I see in these snippets I get? I feel like
+I don't really know exactly what I will get out of this piece of code every time I run
+it with different input.
