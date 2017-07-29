@@ -276,7 +276,7 @@ function generateTable(resultText){
         var col1 = $('<td></td>').text(resultText[i]['name']);
         var col2 = $('<td></td>').text(resultText[i]['address']);
         var col3 = $('<td></td>').text(resultText[i]['status']);
-        
+
 
         row.attr('id',""+ i);
         if(resultText[i]['status'] == 'Nuchter'){
