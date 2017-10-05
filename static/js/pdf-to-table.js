@@ -2,10 +2,9 @@
 
 var map ;
 var panorama = null;
-var table = $('<table id="tbl_results"></table>').addClass('table table-striped table-bordered table-hover table-condensed');
-table.append('<thead><tr><th>Nr</th><th>Naam</th><th>Adres</th><th>Status</th><tr><thead>')
+var table = $('<table id="tbl_results" border="1"></table>').addClass('table tablesorter table-striped table-bordered table-hover table-condensed');
 
-
+table.append('<thead><<th>Nr</th><th>Naam</th><th>Adres</th><th>Status</th><th>Tijd</th><th>Afstand</th></thead>')
 
 //routing variables
 var directionDisplay = null;
@@ -137,9 +136,19 @@ $('#submit').click(function(e) {
 
     generateTable(patients);
     displayMap();
+    setTableSort()
+
+    $('#print').on('click',function(){
+            printData();
+    })
+
+    $('#export').on('click',function(){
+            exportData();
+    })
 
 
 });
+
 
 
 //============== FUNCTIONS ==========================
@@ -168,7 +177,7 @@ function filterAdobePDFpaste(inputText)
 
     //Filter all lines which start with at least two UPPERCASE words following a space
     //pattern = /^(([A-Z'.* ]{2,} ){2,}[A-Z]{1,})(?=.*BSN)/;
-    reBSN = /BSN/gm;
+    reBSN = /(N - Nuchter)|(NN - Niet nuchter)+/;
     //pattern to select all before the Gender.
     reAllBeforeGender = /(\w.+)( V | M )/gm;
     reGender = /( V | M )$/gm;
@@ -271,12 +280,13 @@ function generateTable(resultText){
     $("#tbl_results tbody tr").remove();
 
     for(var i=0; i < resultText.length; i++){
-        var row = $('<tr></tr>');
+        var row = $('<tr>');
         var col0 = $('<td></td>').text((i+1) + "");
         var col1 = $('<td></td>').text(resultText[i]['name']);
         var col2 = $('<td></td>').text(resultText[i]['address']);
         var col3 = $('<td></td>').text(resultText[i]['status']);
-
+        var col4 = $('<td></td>').text(' ');
+        var col5 = $('<td></td>').text(' ');
 
         row.attr('id',""+ i);
         if(resultText[i]['status'] == 'Nuchter'){
@@ -286,13 +296,14 @@ function generateTable(resultText){
             row.addClass('info');
         }
 
-        row.append(col0,col1,col2,col3);
+        row.append(col0,col1,col2,col3,col4,col5);
+        row.append($('</tr>'))
 
         table.append(row);
 
     }
     $('#tableOverview').append(table);
-    $('#tableOverview tr').click(function(){
+    $('#tbl_results > tbody > tr').click(function(){
         var tableMarker = patients[this.id]['marker'][0];
         var i = this.id;
 
@@ -309,6 +320,7 @@ function generateTable(resultText){
         infowindow.setContent(content);
         infowindow.open(map,tableMarker);
     });
+
 }
 
 $('#tableOverview tr td').text
@@ -464,6 +476,120 @@ function afterGeocodingStuff(){
     map.fitBounds(bounds);
 
 }
+
+
+function printData()
+{
+   var divToPrint=document.getElementById("tbl_results");
+   var htmlToPrint = '' +
+        '<style type="text/css">' +
+        'table {border-collapse:collapse;};' +
+        'table th, table td {' +
+        'border: 1px solid black;' +
+        'padding:0.5em;' +
+        '}' +
+        '</style>';
+   htmlToPrint += divToPrint.outerHTML;
+   newWin= window.open("");
+   newWin.document.write(htmlToPrint);
+   console.log(htmlToPrint);
+   newWin.print();
+   newWin.close();
+}
+
+
+function s2ab(s) {
+    if(typeof ArrayBuffer !== 'undefined') {
+        var buf = new ArrayBuffer(s.length);
+        var view = new Uint8Array(buf);
+        for (var i=0; i!=s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+    } else {
+        var buf = new Array(s.length);
+        for (var i=0; i!=s.length; ++i) buf[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+    }
+}
+
+function export_table_to_excel(id, type, fn) {
+    var wb = XLSX.utils.table_to_book(document.getElementById(id), {sheet:"Sheet JS"});
+    var wbout = XLSX.write(wb, {bookType:type, bookSST:true, type: 'binary'});
+    var fname = fn || 'test.' + type;
+    try {
+        saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), fname);
+    } catch(e) { if(typeof console != 'undefined') console.log(e, wbout); }
+    return wbout;
+}
+
+function exportData(type, fn) { return export_table_to_excel('tbl_results', type || 'xlsx', fn); }
+
+
+function setTableSort(){
+
+    $("#tbl_results")
+    .tablesorter({
+      theme : 'blue',
+
+      widgets: ['editable'],
+      widgetOptions: {
+        editable_columns       : [0,4,5],       // or "0-2" (v2.14.2); point to the columns to make editable (zero-based index)
+        editable_enterToAccept : true,          // press enter to accept content, or click outside if false
+        editable_autoAccept    : true,          // accepts any changes made to the table cell automatically (v2.17.6)
+        editable_autoResort    : false,         // auto resort after the content has changed.
+        editable_validate      : null,          // return a valid string: function(text, original, columnIndex){ return text; }
+        editable_focused       : function(txt, columnIndex, $element) {
+          // $element is the div, not the td
+          // to get the td, use $element.closest('td')
+          $element.addClass('focused');
+        },
+        editable_blur          : function(txt, columnIndex, $element) {
+          // $element is the div, not the td
+          // to get the td, use $element.closest('td')
+          $element.removeClass('focused');
+        },
+        editable_selectAll     : function(txt, columnIndex, $element){
+          // note $element is the div inside of the table cell, so use $element.closest('td') to get the cell
+          // only select everthing within the element when the content starts with the letter "B"
+          return /^b/i.test(txt) && columnIndex === 0;
+        },
+        editable_wrapContent   : '<div>',       // wrap all editable cell content... makes this widget work in IE, and with autocomplete
+        editable_trimContent   : true,          // trim content ( removes outer tabs & carriage returns )
+        editable_noEdit        : 'no-edit',     // class name of cell that is not editable
+        editable_editComplete  : 'editComplete' // event fired after the table content has been edited
+      }
+    })
+    // config event variable new in v2.17.6
+    .children('tbody').on('editComplete', 'td', function(event, config){
+      var $this = $(this),
+        newContent = $this.text(),
+        cellIndex = this.cellIndex, // there shouldn't be any colspans in the tbody
+        rowIndex = $this.closest('tr').attr('id'); // data-row-index stored in row id
+
+      // Do whatever you want here to indicate
+      // that the content was updated
+      $this.addClass( 'editable_updated' ); // green background + white text
+      setTimeout(function(){
+        $this.removeClass( 'editable_updated' );
+      }, 500);
+
+      /*
+      $.post("mysite.php", {
+        "row"     : rowIndex,
+        "cell"    : cellIndex,
+        "content" : newContent
+      });
+      */
+    });
+
+
+
+}
+
+
+
+
+
+
 
 
 
