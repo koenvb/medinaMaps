@@ -8,3 +8,19 @@ footer  {
     border: solid 1px black;
     ;
 }
+
+.tablesorter tbody > tr > td > div[contenteditable=true]:focus {
+  outline: #08f 1px solid;
+  background: #eee;
+  resize: none;
+}
+td.no-edit, span.no-edit {
+  background-color: rgba(230,191,153,0.5);
+}
+.focused {
+  color: blue;
+}
+td.editable_updated {
+  background-color: green;
+  color: white;
+}

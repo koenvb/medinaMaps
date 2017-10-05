@@ -182,7 +182,7 @@ function filterAdobePDFpaste(inputText)
     reAllBeforeGender = /(\w.+)( V | M )/gm;
     reGender = /( V | M )$/gm;
     nameRegEx = /^([-A-Z'*.]{2,} ){1,}[-A-Z.]{2,}/gm;
-    reBeforeF = /.+?(?= F )/gm
+    reBeforeF = /.+?(?= N - Nuchter| NN - Niet nuchter)/gm
     //for second run to only have ones with a postcode
     rePostcodeOnlyAddress = /.+?\d{4}/;
     searchNuchter= /(N - Nuchter)+/;
